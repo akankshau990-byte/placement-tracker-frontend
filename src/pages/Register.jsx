@@ -14,7 +14,7 @@ function Register() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://placement-tracker-backend-sik5.onrender.com/api/auth/register",
+        "https://placement-tracker-backend-sik5.onrender.com/api/auth/register",
         {
           name: name,
           email: email,
@@ -61,6 +61,7 @@ function Register() {
             className="form-control"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
           />
         </div>
 

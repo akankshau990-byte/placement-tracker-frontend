@@ -14,7 +14,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "http://placement-tracker-backend-sik5.onrender.com/api/auth/login",
+        "https://placement-tracker-backend-sik5.onrender.com/api/auth/login",
         {
           email: email,
           password: password,
