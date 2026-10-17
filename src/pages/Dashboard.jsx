@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -53,15 +61,29 @@ function Dashboard() {
   };
 
   const totalApps = applications.length;
-  const selectedApps = applications.filter(
-    (app) => app.status === "Selected",
+  const appliedApps = applications.filter(
+    (app) => app.status === "Applied",
   ).length;
   const interviewingApps = applications.filter(
     (app) => app.status === "Interviewing",
   ).length;
+  const selectedApps = applications.filter(
+    (app) => app.status === "Selected",
+  ).length;
   const rejectedApps = applications.filter(
     (app) => app.status === "Rejected",
   ).length;
+
+  // Chart Data preparation
+  const chartData = [
+    { name: "Applied", value: appliedApps },
+    { name: "Interviewing", value: interviewingApps },
+    { name: "Selected", value: selectedApps },
+    { name: "Rejected", value: rejectedApps },
+  ];
+
+  // Chart Colors matching status badges
+  const COLORS = ["#6c757d", "#0dcaf0", "#198754", "#dc3545"];
 
   const filteredApplications = applications.filter((app) => {
     const matchSearch = app.companyName
@@ -75,6 +97,7 @@ function Dashboard() {
     <div className="container mt-5">
       <h2 className="text-center mb-4">My Job Applications </h2>
 
+      {/* Stat Cards Section */}
       <div className="row mb-4 text-center">
         <div className="col-md-3 mb-2">
           <div className="card text-white bg-primary shadow-sm">
@@ -110,6 +133,37 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Analytics Chart Section */}
+      {totalApps > 0 && (
+        <div className="card p-3 mb-4 shadow-sm">
+          <h5 className="text-center mb-3">Application Status Overview</h5>
+          <div style={{ width: "100%", height: 280 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  dataKey="value"
+                  label
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Controls Section */}
       <div className="row mb-4">
         <div className="col-md-5 mb-2">
           <input
