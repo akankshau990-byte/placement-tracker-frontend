@@ -98,6 +98,7 @@ function Dashboard() {
     { label: "Role", key: "role" },
     { label: "Status", key: "status" },
     { label: "Applied Date", key: "appliedDate" },
+    { label: "Interview Date", key: "interviewDate" },
   ];
 
   return (
@@ -232,6 +233,7 @@ function Dashboard() {
               <th>Role</th>
               <th>Status</th>
               <th>Applied Date</th>
+              <th> Interview Date</th>
               <th>Actions</th>
             </tr>
           </thead>
