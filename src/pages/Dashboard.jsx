@@ -261,6 +261,14 @@ function Dashboard() {
                   {app.appliedDate
                     ? new Date(app.appliedDate).toLocaleDateString()
                     : "N/A"}
+                </td>
+
+                <td className="align-middle">
+                  {app.interviewDate
+                    ? new Date(app.interviewDate).toLocaleDateString("en-GB")
+                    : "N/A"}
+                </td>
+                <td className="align-middle">
                   <button
                     className="btn btn-primary btn-sm me-2"
                     onClick={() => navigate(`/edit-application/${app._id}`)}
