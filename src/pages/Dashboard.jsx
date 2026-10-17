@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { CSVLink } from "react-csv";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -74,7 +75,6 @@ function Dashboard() {
     (app) => app.status === "Rejected",
   ).length;
 
-  // Chart Data preparation
   const chartData = [
     { name: "Applied", value: appliedApps },
     { name: "Interviewing", value: interviewingApps },
@@ -82,7 +82,6 @@ function Dashboard() {
     { name: "Rejected", value: rejectedApps },
   ];
 
-  // Chart Colors matching status badges
   const COLORS = ["#6c757d", "#0dcaf0", "#198754", "#dc3545"];
 
   const filteredApplications = applications.filter((app) => {
@@ -92,6 +91,13 @@ function Dashboard() {
     const matchFilter = filter === "All" || app.status === filter;
     return matchSearch && matchFilter;
   });
+
+  // Headers for CSV Export
+  const csvHeaders = [
+    { label: "Company Name", key: "companyName" },
+    { label: "Role", key: "role" },
+    { label: "Status", key: "status" },
+  ];
 
   return (
     <div className="container mt-5">
@@ -163,9 +169,9 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Controls Section */}
-      <div className="row mb-4">
-        <div className="col-md-5 mb-2">
+      {/* Controls Section (Search, Filter, Export CSV, Add New) */}
+      <div className="row mb-4 align-items-center">
+        <div className="col-md-4 mb-2">
           <input
             type="text"
             className="form-control"
@@ -174,7 +180,7 @@ function Dashboard() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="col-md-4 mb-2">
+        <div className="col-md-3 mb-2">
           <select
             className="form-select"
             value={filter}
@@ -188,6 +194,25 @@ function Dashboard() {
           </select>
         </div>
         <div className="col-md-3 mb-2">
+          {filteredApplications.length > 0 ? (
+            <CSVLink
+              data={filteredApplications}
+              headers={csvHeaders}
+              filename={"placement_applications.csv"}
+              className="btn btn-outline-dark w-100 fw-bold"
+            >
+              📥 Export CSV
+            </CSVLink>
+          ) : (
+            <button
+              className="btn btn-outline-secondary w-100 fw-bold"
+              disabled
+            >
+              📥 Export CSV
+            </button>
+          )}
+        </div>
+        <div className="col-md-2 mb-2">
           <button
             className="btn btn-success w-100 fw-bold"
             onClick={() => navigate("/add-application")}
