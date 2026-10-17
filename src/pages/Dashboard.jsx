@@ -97,6 +97,7 @@ function Dashboard() {
     { label: "Company Name", key: "companyName" },
     { label: "Role", key: "role" },
     { label: "Status", key: "status" },
+    { label: "Applied Date", key: "appliedDate" },
   ];
 
   return (
@@ -230,6 +231,7 @@ function Dashboard() {
               <th>Company</th>
               <th>Role</th>
               <th>Status</th>
+              <th>Applied Date</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -254,6 +256,9 @@ function Dashboard() {
                   </span>
                 </td>
                 <td className="align-middle">
+                  {app.appliedDate
+                    ? new Date(app.appliedDate).toLocaleDateString()
+                    : "N/A"}
                   <button
                     className="btn btn-primary btn-sm me-2"
                     onClick={() => navigate(`/edit-application/${app._id}`)}

@@ -7,87 +7,98 @@ function AddApplication() {
   const [companyName, setCompanyName] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("Applied");
+  const [appliedDate, setAppliedDate] = useState("");
+  const [interviewDate, setInterviewDate] = useState("");
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const token = localStorage.getItem("token");
-
     try {
+      const token = localStorage.getItem("token");
       await axios.post(
         "https://placement-tracker-backend-sik5.onrender.com/api/applications",
         {
-          companyName: companyName,
-          role: role,
-          status: status,
+          companyName,
+          role,
+          status,
+          appliedDate: appliedDate || undefined,
+          interviewDate: interviewDate || undefined,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
-
-      toast.success("Job Application Added Successfully!");
-
+      toast.success("Application Added Successfully!");
       navigate("/dashboard");
     } catch (error) {
-      console.log("Error:", error);
       toast.error("Failed to add application");
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="card shadow-sm mx-auto" style={{ maxWidth: "500px" }}>
-        <div className="card-body p-4">
-          <h3 className="text-center mb-4">Add New Application </h3>
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label fw-bold">Company Name</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Google, TCS"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label fw-bold">Role</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Frontend Developer"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="form-label fw-bold">Current Status</label>
-              <select
-                className="form-select"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="Applied">Applied</option>
-                <option value="Interviewing">Interviewing</option>
-                <option value="Selected">Selected</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-
-            <button type="submit" className="btn btn-primary w-100 fw-bold">
-              Save Application
-            </button>
-          </form>
+    <div className="container mt-5" style={{ maxWidth: "600px" }}>
+      <h2 className="mb-4 text-center">Add Job Application</h2>
+      <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
+        <div className="mb-3">
+          <label className="form-label font-weight-bold">Company Name</label>
+          <input
+            type="text"
+            className="form-control"
+            required
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
         </div>
-      </div>
+        <div className="mb-3">
+          <label className="form-label font-weight-bold">Role</label>
+          <input
+            type="text"
+            className="form-control"
+            required
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label font-weight-bold">Status</label>
+          <select
+            className="form-select"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="Applied">Applied</option>
+            <option value="Interviewing">Interviewing</option>
+            <option value="Selected">Selected</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <label className="form-label font-weight-bold">Applied Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={appliedDate}
+              onChange={(e) => setAppliedDate(e.target.value)}
+            />
+          </div>
+          <div className="col-md-6">
+            <label className="form-label font-weight-bold">
+              Interview Date
+            </label>
+            <input
+              type="date"
+              className="form-control"
+              value={interviewDate}
+              onChange={(e) => setInterviewDate(e.target.value)}
+            />
+          </div>
+        </div>
+        <button type="submit" className="btn btn-primary w-100 fw-bold">
+          Submit Application
+        </button>
+      </form>
     </div>
   );
 }
