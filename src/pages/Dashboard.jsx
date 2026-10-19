@@ -123,7 +123,7 @@ function Dashboard() {
     <div className="container mt-5">
       <h2 className="text-center mb-4">My Job Applications</h2>
 
-      {/* 5 Stat Cards Section (Including Total & Applied) */}
+      {/* Stat Cards Section */}
       <div className="row mb-4 text-center">
         <div className="col mb-2">
           <div
@@ -197,16 +197,12 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Analytics Chart */}
+      {/* Analytics Chart (Fixed Node error with width 99% and minHeight) */}
       {totalApps > 0 && (
         <div className="card p-3 mb-4 shadow-sm">
           <h5 className="text-center mb-3">Application Status Overview</h5>
-          <div style={{ width: "100%", height: "280px", position: "relative" }}>
-            <ResponsiveContainer
-              width="99%"
-              height="100%"
-              key={applications.length}
-            >
+          <div style={{ width: "100%", height: 280, minHeight: 280 }}>
+            <ResponsiveContainer width="99%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
@@ -341,8 +337,9 @@ function Dashboard() {
                     ? new Date(app.interviewDate).toLocaleDateString("en-GB")
                     : "N/A"}
                 </td>
+                {/* Notes Display Logic Fix */}
                 <td className="align-middle">
-                  {app.notes && app.notes.trim() !== "" ? (
+                  {app.notes && String(app.notes).trim().length > 0 ? (
                     <span
                       className="text-truncate d-inline-block"
                       style={{ maxWidth: "150px" }}
