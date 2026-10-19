@@ -83,7 +83,7 @@ function Dashboard() {
     { name: "Rejected", value: rejectedApps },
   ];
 
-  const COLORS = ["#6c757d", "#0dcaf0", "#198754", "#dc3545"];
+  const COLORS = ["#0d6efd", "#0dcaf0", "#198754", "#dc3545"];
 
   const filteredApplications = applications.filter((app) => {
     const matchSearch = app.companyName
@@ -123,23 +123,37 @@ function Dashboard() {
     <div className="container mt-5">
       <h2 className="text-center mb-4">My Job Applications</h2>
 
-      {/* Stat Cards */}
+      {/* 5 Stat Cards Section (Including Total & Applied) */}
       <div className="row mb-4 text-center">
-        <div className="col-md-3 mb-2">
+        <div className="col mb-2">
           <div
-            className={`card text-white bg-primary shadow-sm ${
-              filter === "All" ? "border border-4 border-dark" : ""
+            className={`card text-white bg-dark shadow-sm ${
+              filter === "All" ? "border border-4 border-warning" : ""
             }`}
             style={{ cursor: "pointer" }}
             onClick={() => setFilter("All")}
           >
-            <div className="card-body">
-              <h6 className="card-title">Total Applications</h6>
-              <h2 className="card-text fw-bold">{totalApps}</h2>
+            <div className="card-body p-2">
+              <h6 className="card-title mb-1">Total</h6>
+              <h3 className="card-text fw-bold mb-0">{totalApps}</h3>
             </div>
           </div>
         </div>
-        <div className="col-md-3 mb-2">
+        <div className="col mb-2">
+          <div
+            className={`card text-white bg-primary shadow-sm ${
+              filter === "Applied" ? "border border-4 border-dark" : ""
+            }`}
+            style={{ cursor: "pointer" }}
+            onClick={() => setFilter("Applied")}
+          >
+            <div className="card-body p-2">
+              <h6 className="card-title mb-1">Applied</h6>
+              <h3 className="card-text fw-bold mb-0">{appliedApps}</h3>
+            </div>
+          </div>
+        </div>
+        <div className="col mb-2">
           <div
             className={`card text-dark bg-info shadow-sm ${
               filter === "Interviewing" ? "border border-4 border-dark" : ""
@@ -147,13 +161,13 @@ function Dashboard() {
             style={{ cursor: "pointer" }}
             onClick={() => setFilter("Interviewing")}
           >
-            <div className="card-body">
-              <h6 className="card-title">Interviewing</h6>
-              <h2 className="card-text fw-bold">{interviewingApps}</h2>
+            <div className="card-body p-2">
+              <h6 className="card-title mb-1">Interviewing</h6>
+              <h3 className="card-text fw-bold mb-0">{interviewingApps}</h3>
             </div>
           </div>
         </div>
-        <div className="col-md-3 mb-2">
+        <div className="col mb-2">
           <div
             className={`card text-white bg-success shadow-sm ${
               filter === "Selected" ? "border border-4 border-dark" : ""
@@ -161,13 +175,13 @@ function Dashboard() {
             style={{ cursor: "pointer" }}
             onClick={() => setFilter("Selected")}
           >
-            <div className="card-body">
-              <h6 className="card-title">Selected</h6>
-              <h2 className="card-text fw-bold">{selectedApps}</h2>
+            <div className="card-body p-2">
+              <h6 className="card-title mb-1">Selected</h6>
+              <h3 className="card-text fw-bold mb-0">{selectedApps}</h3>
             </div>
           </div>
         </div>
-        <div className="col-md-3 mb-2">
+        <div className="col mb-2">
           <div
             className={`card text-white bg-danger shadow-sm ${
               filter === "Rejected" ? "border border-4 border-dark" : ""
@@ -175,9 +189,9 @@ function Dashboard() {
             style={{ cursor: "pointer" }}
             onClick={() => setFilter("Rejected")}
           >
-            <div className="card-body">
-              <h6 className="card-title">Rejected</h6>
-              <h2 className="card-text fw-bold">{rejectedApps}</h2>
+            <div className="card-body p-2">
+              <h6 className="card-title mb-1">Rejected</h6>
+              <h3 className="card-text fw-bold mb-0">{rejectedApps}</h3>
             </div>
           </div>
         </div>
@@ -310,8 +324,8 @@ function Dashboard() {
                           : app.status === "Interviewing"
                             ? "bg-info text-dark"
                             : app.status === "Applied"
-                              ? "bg-primary" // Ya "bg-secondary"
-                              : "bg-dark"
+                              ? "bg-primary"
+                              : "bg-secondary"
                     }`}
                   >
                     {app.status}
@@ -328,7 +342,7 @@ function Dashboard() {
                     : "N/A"}
                 </td>
                 <td className="align-middle">
-                  {app.notes ? (
+                  {app.notes && app.notes.trim() !== "" ? (
                     <span
                       className="text-truncate d-inline-block"
                       style={{ maxWidth: "150px" }}
