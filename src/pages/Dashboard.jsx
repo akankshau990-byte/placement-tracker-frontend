@@ -309,7 +309,9 @@ function Dashboard() {
                           ? "bg-danger"
                           : app.status === "Interviewing"
                             ? "bg-info text-dark"
-                            : "bg-secondary"
+                            : app.status === "Applied"
+                              ? "bg-primary" // Ya "bg-secondary"
+                              : "bg-dark"
                     }`}
                   >
                     {app.status}
