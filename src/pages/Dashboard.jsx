@@ -288,9 +288,24 @@ function Dashboard() {
               <th>Status</th>
               <th>Applied Date</th>
               <th>Interview Date</th>
+              <th>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
+          {/* Table Row Data */}
+          <td className="align-middle">
+            {app.notes ? (
+              <span
+                className="text-truncate d-inline-block"
+                style={{ maxWidth: "150px" }}
+                title={app.notes}
+              >
+                {app.notes}
+              </span>
+            ) : (
+              <span className="text-muted small">No notes</span>
+            )}
+          </td>
           <tbody>
             {sortedApplications.map((app) => (
               <tr key={app._id}>
