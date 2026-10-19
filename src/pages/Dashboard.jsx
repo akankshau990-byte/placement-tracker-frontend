@@ -18,7 +18,7 @@ function Dashboard() {
   const [applications, setApplications] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("newest"); // New State for Sorting
+  const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -85,7 +85,6 @@ function Dashboard() {
 
   const COLORS = ["#6c757d", "#0dcaf0", "#198754", "#dc3545"];
 
-  // Filter Logic
   const filteredApplications = applications.filter((app) => {
     const matchSearch = app.companyName
       .toLowerCase()
@@ -94,7 +93,6 @@ function Dashboard() {
     return matchSearch && matchFilter;
   });
 
-  // Sorting Logic
   const sortedApplications = [...filteredApplications].sort((a, b) => {
     if (sortBy === "newest") {
       return (
@@ -118,13 +116,14 @@ function Dashboard() {
     { label: "Status", key: "status" },
     { label: "Applied Date", key: "appliedDate" },
     { label: "Interview Date", key: "interviewDate" },
+    { label: "Notes", key: "notes" },
   ];
 
   return (
     <div className="container mt-5">
       <h2 className="text-center mb-4">My Job Applications</h2>
 
-      {/* Clickable Stat Cards Section */}
+      {/* Stat Cards */}
       <div className="row mb-4 text-center">
         <div className="col-md-3 mb-2">
           <div
@@ -184,8 +183,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Analytics Chart Section */}
-      {/* Analytics Chart Section */}
+      {/* Analytics Chart */}
       {totalApps > 0 && (
         <div className="card p-3 mb-4 shadow-sm">
           <h5 className="text-center mb-3">Application Status Overview</h5>
@@ -215,7 +213,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Controls Section (Search, Filter, Sort, Export CSV, Add New) */}
+      {/* Controls Section */}
       <div className="row mb-4 align-items-center">
         <div className="col-md-3 mb-2">
           <input
@@ -293,20 +291,6 @@ function Dashboard() {
               <th>Actions</th>
             </tr>
           </thead>
-          {/* Table Row Data */}
-          <td className="align-middle">
-            {app.notes ? (
-              <span
-                className="text-truncate d-inline-block"
-                style={{ maxWidth: "150px" }}
-                title={app.notes}
-              >
-                {app.notes}
-              </span>
-            ) : (
-              <span className="text-muted small">No notes</span>
-            )}
-          </td>
           <tbody>
             {sortedApplications.map((app) => (
               <tr key={app._id}>
@@ -338,6 +322,19 @@ function Dashboard() {
                     : "N/A"}
                 </td>
                 <td className="align-middle">
+                  {app.notes ? (
+                    <span
+                      className="text-truncate d-inline-block"
+                      style={{ maxWidth: "150px" }}
+                      title={app.notes}
+                    >
+                      {app.notes}
+                    </span>
+                  ) : (
+                    <span className="text-muted small">No notes</span>
+                  )}
+                </td>
+                <td className="align-middle">
                   <button
                     className="btn btn-primary btn-sm me-2"
                     onClick={() => navigate(`/edit-application/${app._id}`)}
@@ -355,7 +352,7 @@ function Dashboard() {
             ))}
             {sortedApplications.length === 0 && (
               <tr>
-                <td colSpan="6" className="text-center text-muted py-3">
+                <td colSpan="7" className="text-center text-muted py-3">
                   No applications found.
                 </td>
               </tr>
