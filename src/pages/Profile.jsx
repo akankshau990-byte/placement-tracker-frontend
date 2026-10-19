@@ -47,6 +47,7 @@ function Profile() {
       );
       toast.success(res.data.message || "Profile picture updated!");
       fetchProfile();
+      setAvatarUrl("");
     } catch (error) {
       toast.error("Failed to update profile picture");
     }
@@ -114,6 +115,16 @@ function Profile() {
       <div className="card p-4 shadow-sm">
         <h5 className="card-title mb-3">Change Password</h5>
         <form onSubmit={handlePasswordChange}>
+          {/* Hidden Accessibility Field */}
+          <input
+            type="text"
+            name="username"
+            value={user.email || ""}
+            readOnly
+            hidden
+            autoComplete="username"
+          />
+
           <div className="mb-3">
             <label className="form-label font-weight-bold">
               Current Password
