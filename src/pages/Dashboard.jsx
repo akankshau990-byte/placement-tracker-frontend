@@ -185,11 +185,12 @@ function Dashboard() {
       </div>
 
       {/* Analytics Chart Section */}
+      {/* Analytics Chart Section */}
       {totalApps > 0 && (
         <div className="card p-3 mb-4 shadow-sm">
           <h5 className="text-center mb-3">Application Status Overview</h5>
-          <div style={{ width: "100%", height: 280 }}>
-            <ResponsiveContainer>
+          <div style={{ width: "100%", height: "280px", minHeight: "280px" }}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
