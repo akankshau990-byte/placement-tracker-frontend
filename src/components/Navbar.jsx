@@ -24,6 +24,12 @@ function Navbar() {
               <button className="btn btn-danger" onClick={handleLogout}>
                 Logout
               </button>
+              <button
+                className="btn btn-outline-light me-2"
+                onClick={() => navigate("/profile")}
+              >
+                👤 Profile
+              </button>
             </>
           ) : (
             <>

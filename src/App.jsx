@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddApplication from "./pages/AddApplication";
 import EditApplication from "./pages/EditApplication";
+import Profile from "./pages/Profile";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
