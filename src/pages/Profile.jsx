@@ -28,7 +28,7 @@ function Profile() {
         },
       );
       setUser(res.data);
-      setAvatarUrl(res.data.avatar || "");
+      // Removed setAvatarUrl from here so input stays blank on load
     } catch (error) {
       toast.error("Failed to fetch profile details");
     }
@@ -46,8 +46,8 @@ function Profile() {
         },
       );
       toast.success(res.data.message || "Profile picture updated!");
-      fetchProfile();
-      setAvatarUrl("");
+      setUser((prev) => ({ ...prev, avatar: avatarUrl })); // Instant UI update
+      setAvatarUrl(""); // Clears input box completely
     } catch (error) {
       toast.error("Failed to update profile picture");
     }
