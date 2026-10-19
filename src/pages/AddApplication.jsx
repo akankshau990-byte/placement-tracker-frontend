@@ -9,6 +9,7 @@ function AddApplication() {
   const [status, setStatus] = useState("Applied");
   const [appliedDate, setAppliedDate] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
+  const [notes, setNotes] = useState(""); // Naya state
 
   const navigate = useNavigate();
 
@@ -24,6 +25,7 @@ function AddApplication() {
           status,
           appliedDate: appliedDate || undefined,
           interviewDate: interviewDate || undefined,
+          notes,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -94,6 +96,18 @@ function AddApplication() {
               onChange={(e) => setInterviewDate(e.target.value)}
             />
           </div>
+        </div>
+        <div className="mb-3">
+          <label className="form-label font-weight-bold">
+            Preparation / Interview Notes
+          </label>
+          <textarea
+            className="form-control"
+            rows="3"
+            placeholder="E.g., Round 1 cleared, focus on DSA Graphs and System Design..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          ></textarea>
         </div>
         <button type="submit" className="btn btn-primary w-100 fw-bold">
           Submit Application
