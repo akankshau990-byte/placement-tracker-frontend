@@ -5,34 +5,52 @@ import { useNavigate } from "react-router-dom";
 
 function Profile() {
   const navigate = useNavigate();
-  const [user, setUser] = useState({ name: "", email: "" });
+  const [user, setUser] = useState({ name: "", email: "", avatar: "" });
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-        const res = await axios.get(
-          "https://placement-tracker-backend-sik5.onrender.com/api/auth/profile",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        setUser(res.data);
-      } catch (error) {
-        console.error("Profile Fetch Error Details:", error.response);
-        toast.error(
-          error.response?.data?.message || "Failed to fetch profile details",
-        );
-      }
-    };
     fetchProfile();
   }, [navigate]);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+      const res = await axios.get(
+        "https://placement-tracker-backend-sik5.onrender.com/api/auth/profile",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      setUser(res.data);
+      setAvatarUrl(res.data.avatar || "");
+    } catch (error) {
+      toast.error("Failed to fetch profile details");
+    }
+  };
+
+  const handleAvatarUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        "https://placement-tracker-backend-sik5.onrender.com/api/auth/update-avatar",
+        { avatar: avatarUrl },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      toast.success(res.data.message || "Profile picture updated!");
+      fetchProfile();
+    } catch (error) {
+      toast.error("Failed to update profile picture");
+    }
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -54,18 +72,42 @@ function Profile() {
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "600px" }}>
+    <div className="container mt-5" style={{ maxWidth: "650px" }}>
       <h2 className="text-center mb-4">My Account Profile</h2>
 
-      {/* User Details Card */}
-      <div className="card p-4 shadow-sm mb-4">
-        <h5 className="card-title mb-3">User Details</h5>
-        <div className="mb-2">
-          <strong>Full Name: </strong> <span>{user.name || "N/A"}</span>
+      {/* User Details & Photo Card */}
+      <div className="card p-4 shadow-sm mb-4 text-center">
+        <div className="mb-3">
+          <img
+            src={
+              user.avatar ||
+              "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+            }
+            alt="Profile Avatar"
+            className="rounded-circle img-thumbnail shadow-sm"
+            style={{ width: "130px", height: "130px", objectFit: "cover" }}
+          />
         </div>
-        <div className="mb-2">
-          <strong>Email Address: </strong> <span>{user.email || "N/A"}</span>
-        </div>
+
+        <h4 className="fw-bold mb-1">{user.name || "N/A"}</h4>
+        <p className="text-muted mb-3">{user.email || "N/A"}</p>
+
+        {/* Update Avatar Form */}
+        <form onSubmit={handleAvatarUpdate} className="mt-2">
+          <div className="input-group">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Paste Image URL or Avatar Link..."
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              required
+            />
+            <button type="submit" className="btn btn-primary">
+              📸 Change Photo
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Password Change Form */}
