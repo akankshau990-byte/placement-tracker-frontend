@@ -28,7 +28,6 @@ function Profile() {
         },
       );
       setUser(res.data);
-      // Removed setAvatarUrl from here so input stays blank on load
     } catch (error) {
       toast.error("Failed to fetch profile details");
     }
@@ -36,20 +35,25 @@ function Profile() {
 
   const handleAvatarUpdate = async (e) => {
     e.preventDefault();
+    if (!avatarUrl.trim()) return;
+
+    const newUrl = avatarUrl;
+    setAvatarUrl(""); // Clears the input field IMMEDIATELY on click
+
     try {
       const token = localStorage.getItem("token");
       const res = await axios.put(
         "https://placement-tracker-backend-sik5.onrender.com/api/auth/update-avatar",
-        { avatar: avatarUrl },
+        { avatar: newUrl },
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
       toast.success(res.data.message || "Profile picture updated!");
-      setUser((prev) => ({ ...prev, avatar: avatarUrl })); // Instant UI update
-      setAvatarUrl(""); // Clears input box completely
+      setUser((prev) => ({ ...prev, avatar: newUrl }));
     } catch (error) {
       toast.error("Failed to update profile picture");
+      fetchProfile();
     }
   };
 
