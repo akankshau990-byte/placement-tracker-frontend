@@ -25,7 +25,10 @@ function Profile() {
         );
         setUser(res.data);
       } catch (error) {
-        toast.error("Failed to fetch profile details");
+        console.error("Profile Fetch Error Details:", error.response);
+        toast.error(
+          error.response?.data?.message || "Failed to fetch profile details",
+        );
       }
     };
     fetchProfile();
@@ -58,10 +61,10 @@ function Profile() {
       <div className="card p-4 shadow-sm mb-4">
         <h5 className="card-title mb-3">User Details</h5>
         <div className="mb-2">
-          <strong>Full Name: </strong> <span>{user.name}</span>
+          <strong>Full Name: </strong> <span>{user.name || "N/A"}</span>
         </div>
         <div className="mb-2">
-          <strong>Email Address: </strong> <span>{user.email}</span>
+          <strong>Email Address: </strong> <span>{user.email || "N/A"}</span>
         </div>
       </div>
 
@@ -77,6 +80,7 @@ function Profile() {
               type="password"
               className="form-control"
               required
+              autoComplete="current-password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
             />
@@ -87,6 +91,7 @@ function Profile() {
               type="password"
               className="form-control"
               required
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
