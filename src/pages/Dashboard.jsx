@@ -18,6 +18,7 @@ function Dashboard() {
   const [applications, setApplications] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("newest"); // New State for Sorting
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -53,7 +54,7 @@ function Dashboard() {
           },
         );
         setApplications(applications.filter((app) => app._id !== id));
-        toast.warning("Application Deleted! ");
+        toast.warning("Application Deleted!");
       } catch (error) {
         console.log("Error deleting application:", error);
         toast.error("Failed to delete application.");
@@ -84,6 +85,7 @@ function Dashboard() {
 
   const COLORS = ["#6c757d", "#0dcaf0", "#198754", "#dc3545"];
 
+  // Filter Logic
   const filteredApplications = applications.filter((app) => {
     const matchSearch = app.companyName
       .toLowerCase()
@@ -92,7 +94,24 @@ function Dashboard() {
     return matchSearch && matchFilter;
   });
 
-  // Headers for CSV Export
+  // Sorting Logic
+  const sortedApplications = [...filteredApplications].sort((a, b) => {
+    if (sortBy === "newest") {
+      return (
+        new Date(b.createdAt || b.appliedDate) -
+        new Date(a.createdAt || a.appliedDate)
+      );
+    } else if (sortBy === "oldest") {
+      return (
+        new Date(a.createdAt || a.appliedDate) -
+        new Date(b.createdAt || b.appliedDate)
+      );
+    } else if (sortBy === "company") {
+      return a.companyName.localeCompare(b.companyName);
+    }
+    return 0;
+  });
+
   const csvHeaders = [
     { label: "Company Name", key: "companyName" },
     { label: "Role", key: "role" },
@@ -103,12 +122,18 @@ function Dashboard() {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center mb-4">My Job Applications </h2>
+      <h2 className="text-center mb-4">My Job Applications</h2>
 
-      {/* Stat Cards Section */}
+      {/* Clickable Stat Cards Section */}
       <div className="row mb-4 text-center">
         <div className="col-md-3 mb-2">
-          <div className="card text-white bg-primary shadow-sm">
+          <div
+            className={`card text-white bg-primary shadow-sm ${
+              filter === "All" ? "border border-4 border-dark" : ""
+            }`}
+            style={{ cursor: "pointer" }}
+            onClick={() => setFilter("All")}
+          >
             <div className="card-body">
               <h6 className="card-title">Total Applications</h6>
               <h2 className="card-text fw-bold">{totalApps}</h2>
@@ -116,7 +141,13 @@ function Dashboard() {
           </div>
         </div>
         <div className="col-md-3 mb-2">
-          <div className="card text-dark bg-info shadow-sm">
+          <div
+            className={`card text-dark bg-info shadow-sm ${
+              filter === "Interviewing" ? "border border-4 border-dark" : ""
+            }`}
+            style={{ cursor: "pointer" }}
+            onClick={() => setFilter("Interviewing")}
+          >
             <div className="card-body">
               <h6 className="card-title">Interviewing</h6>
               <h2 className="card-text fw-bold">{interviewingApps}</h2>
@@ -124,7 +155,13 @@ function Dashboard() {
           </div>
         </div>
         <div className="col-md-3 mb-2">
-          <div className="card text-white bg-success shadow-sm">
+          <div
+            className={`card text-white bg-success shadow-sm ${
+              filter === "Selected" ? "border border-4 border-dark" : ""
+            }`}
+            style={{ cursor: "pointer" }}
+            onClick={() => setFilter("Selected")}
+          >
             <div className="card-body">
               <h6 className="card-title">Selected</h6>
               <h2 className="card-text fw-bold">{selectedApps}</h2>
@@ -132,7 +169,13 @@ function Dashboard() {
           </div>
         </div>
         <div className="col-md-3 mb-2">
-          <div className="card text-white bg-danger shadow-sm">
+          <div
+            className={`card text-white bg-danger shadow-sm ${
+              filter === "Rejected" ? "border border-4 border-dark" : ""
+            }`}
+            style={{ cursor: "pointer" }}
+            onClick={() => setFilter("Rejected")}
+          >
             <div className="card-body">
               <h6 className="card-title">Rejected</h6>
               <h2 className="card-text fw-bold">{rejectedApps}</h2>
@@ -171,13 +214,13 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Controls Section (Search, Filter, Export CSV, Add New) */}
+      {/* Controls Section (Search, Filter, Sort, Export CSV, Add New) */}
       <div className="row mb-4 align-items-center">
-        <div className="col-md-4 mb-2">
+        <div className="col-md-3 mb-2">
           <input
             type="text"
             className="form-control"
-            placeholder="Search company name..."
+            placeholder="Search company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -195,10 +238,21 @@ function Dashboard() {
             <option value="Rejected">Rejected</option>
           </select>
         </div>
-        <div className="col-md-3 mb-2">
-          {filteredApplications.length > 0 ? (
+        <div className="col-md-2 mb-2">
+          <select
+            className="form-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="company">Company (A-Z)</option>
+          </select>
+        </div>
+        <div className="col-md-2 mb-2">
+          {sortedApplications.length > 0 ? (
             <CSVLink
-              data={filteredApplications}
+              data={sortedApplications}
               headers={csvHeaders}
               filename={"placement_applications.csv"}
               className="btn btn-outline-dark w-100 fw-bold"
@@ -233,12 +287,12 @@ function Dashboard() {
               <th>Role</th>
               <th>Status</th>
               <th>Applied Date</th>
-              <th> Interview Date</th>
+              <th>Interview Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredApplications.map((app) => (
+            {sortedApplications.map((app) => (
               <tr key={app._id}>
                 <td className="align-middle fw-bold">{app.companyName}</td>
                 <td className="align-middle">{app.role}</td>
@@ -259,10 +313,9 @@ function Dashboard() {
                 </td>
                 <td className="align-middle">
                   {app.appliedDate
-                    ? new Date(app.appliedDate).toLocaleDateString()
+                    ? new Date(app.appliedDate).toLocaleDateString("en-GB")
                     : "N/A"}
                 </td>
-
                 <td className="align-middle">
                   {app.interviewDate
                     ? new Date(app.interviewDate).toLocaleDateString("en-GB")
@@ -284,9 +337,9 @@ function Dashboard() {
                 </td>
               </tr>
             ))}
-            {filteredApplications.length === 0 && (
+            {sortedApplications.length === 0 && (
               <tr>
-                <td colSpan="4" className="text-center text-muted py-3">
+                <td colSpan="6" className="text-center text-muted py-3">
                   No applications found.
                 </td>
               </tr>
