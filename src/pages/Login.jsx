@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Link imported
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ function Login() {
       );
       localStorage.setItem("token", response.data.token);
       console.log("Success! Backend ka Data:", response.data);
-      toast.success("Login Successful! ");
+      toast.success("Login Successful!");
       navigate("/dashboard");
     } catch (error) {
       console.log("Login Error:", error.response?.data);
@@ -52,7 +52,7 @@ function Login() {
               />
             </div>
 
-            <div className="mb-4">
+            <div className="mb-2">
               <label className="form-label fw-bold">Password</label>
               <input
                 type="password"
@@ -62,6 +62,16 @@ function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="text-end mb-4">
+              <Link
+                to="/forgot-password"
+                className="text-decoration-none text-primary small fw-bold"
+              >
+                Forgot Password?
+              </Link>
             </div>
 
             <button

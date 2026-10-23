@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import AddApplication from "./pages/AddApplication";
 import EditApplication from "./pages/EditApplication";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="/add-application" element={<AddApplication />} />
         <Route path="/edit-application/:id" element={<EditApplication />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </BrowserRouter>
   );
