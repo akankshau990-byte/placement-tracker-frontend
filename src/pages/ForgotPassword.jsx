@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
 function ForgotPassword() {
-  const [step, setStep] = useState(1); // Step 1: Email, Step 2: OTP & New Password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -19,12 +19,11 @@ function ForgotPassword() {
         "https://placement-tracker-backend-sik5.onrender.com/api/auth/forgot-password",
         { email },
       );
-      toast.success(res.data.message || "OTP sent to your email!");
+      toast.success(res.data.message || "OTP sent!");
       setStep(2);
     } catch (error) {
       toast.error(
-        error.response?.data?.message ||
-          "Failed to send OTP. Check your email!",
+        error.response?.data?.message || "Failed to send OTP. Check email!",
       );
     } finally {
       setLoading(false);
@@ -51,7 +50,7 @@ function ForgotPassword() {
   return (
     <div className="container mt-5" style={{ maxWidth: "450px" }}>
       <div className="card p-4 shadow-sm">
-        <h3 className="text-center mb-3">Forgot Password</h3>
+        <h3 className="text-center mb-3">Forgot Password 🔐</h3>
 
         {step === 1 ? (
           <form onSubmit={handleSendOtp}>
@@ -65,6 +64,7 @@ function ForgotPassword() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
@@ -78,14 +78,25 @@ function ForgotPassword() {
           </form>
         ) : (
           <form onSubmit={handleResetPassword}>
+            {/* Accessibility Username Hint */}
+            <input
+              type="text"
+              name="username"
+              value={email}
+              readOnly
+              hidden
+              autoComplete="username"
+            />
+
             <div className="mb-3">
               <label className="form-label font-weight-bold">6-Digit OTP</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter OTP"
+                placeholder="Enter 6-Digit OTP"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
+                autoComplete="one-time-code"
                 required
               />
             </div>
@@ -99,6 +110,7 @@ function ForgotPassword() {
                 placeholder="Enter new password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
             </div>
