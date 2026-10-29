@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { CSVLink } from "react-csv";
+import KanbanBoard from "../components/KanbanBoard";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -19,9 +20,12 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
+
+  const backendUrl = "https://placement-tracker-backend-sik5.onrender.com";
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
     } else {
@@ -29,14 +33,11 @@ function Dashboard() {
     }
   }, []);
 
-  const fetchApplications = async (token) => {
+  const fetchApplications = async (authToken) => {
     try {
-      const response = await axios.get(
-        "https://placement-tracker-backend-sik5.onrender.com/api/applications",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const response = await axios.get(`${backendUrl}/api/applications`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setApplications(response.data);
     } catch (error) {
       console.log("Error fetching applications:", error);
@@ -44,15 +45,11 @@ function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem("token");
     if (window.confirm("Are you sure you want to delete this application?")) {
       try {
-        await axios.delete(
-          `https://placement-tracker-backend-sik5.onrender.com/api/applications/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        await axios.delete(`${backendUrl}/api/applications/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setApplications(applications.filter((app) => app._id !== id));
         toast.warning("Application Deleted!");
       } catch (error) {
@@ -87,8 +84,8 @@ function Dashboard() {
 
   const filteredApplications = applications.filter((app) => {
     const matchSearch = app.companyName
-      .toLowerCase()
-      .includes(search.toLowerCase());
+      ? app.companyName.toLowerCase().includes(search.toLowerCase())
+      : true;
     const matchFilter = filter === "All" || app.status === filter;
     return matchSearch && matchFilter;
   });
@@ -105,7 +102,7 @@ function Dashboard() {
         new Date(b.createdAt || b.appliedDate)
       );
     } else if (sortBy === "company") {
-      return a.companyName.localeCompare(b.companyName);
+      return (a.companyName || "").localeCompare(b.companyName || "");
     }
     return 0;
   });
@@ -121,7 +118,27 @@ function Dashboard() {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center mb-4">My Job Applications</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Job Applications</h2>
+
+        {/* View Toggle Switch (Table vs Kanban) */}
+        <div className="btn-group" role="group">
+          <button
+            type="button"
+            className={`btn ${viewMode === "table" ? "btn-primary" : "btn-outline-primary"}`}
+            onClick={() => setViewMode("table")}
+          >
+            📋 Table View
+          </button>
+          <button
+            type="button"
+            className={`btn ${viewMode === "kanban" ? "btn-primary" : "btn-outline-primary"}`}
+            onClick={() => setViewMode("kanban")}
+          >
+            📊 Kanban Board
+          </button>
+        </div>
+      </div>
 
       {/* Stat Cards Section */}
       <div className="row mb-4 text-center">
@@ -197,7 +214,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Analytics Chart (Fixed Node error with width 99% and minHeight) */}
+      {/* Analytics Chart */}
       {totalApps > 0 && (
         <div className="card p-3 mb-4 shadow-sm">
           <h5 className="text-center mb-3">Application Status Overview</h5>
@@ -291,92 +308,100 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="table-responsive shadow-sm">
-        <table className="table table-hover table-bordered table-striped mb-0">
-          <thead className="table-dark">
-            <tr>
-              <th>Company</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Applied Date</th>
-              <th>Interview Date</th>
-              <th>Notes</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedApplications.map((app) => (
-              <tr key={app._id}>
-                <td className="align-middle fw-bold">{app.companyName}</td>
-                <td className="align-middle">{app.role}</td>
-                <td className="align-middle">
-                  <span
-                    className={`badge ${
-                      app.status === "Selected"
-                        ? "bg-success"
-                        : app.status === "Rejected"
-                          ? "bg-danger"
-                          : app.status === "Interviewing"
-                            ? "bg-info text-dark"
-                            : app.status === "Applied"
-                              ? "bg-primary"
-                              : "bg-secondary"
-                    }`}
-                  >
-                    {app.status}
-                  </span>
-                </td>
-                <td className="align-middle">
-                  {app.appliedDate
-                    ? new Date(app.appliedDate).toLocaleDateString("en-GB")
-                    : "N/A"}
-                </td>
-                <td className="align-middle">
-                  {app.interviewDate
-                    ? new Date(app.interviewDate).toLocaleDateString("en-GB")
-                    : "N/A"}
-                </td>
-                {/* Notes Display Logic Fix */}
-                <td className="align-middle">
-                  {app.notes && String(app.notes).trim().length > 0 ? (
-                    <span
-                      className="text-truncate d-inline-block"
-                      style={{ maxWidth: "150px" }}
-                      title={app.notes}
-                    >
-                      {app.notes}
-                    </span>
-                  ) : (
-                    <span className="text-muted small">No notes</span>
-                  )}
-                </td>
-                <td className="align-middle">
-                  <button
-                    className="btn btn-primary btn-sm me-2"
-                    onClick={() => navigate(`/edit-application/${app._id}`)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(app._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {sortedApplications.length === 0 && (
+      {/* Conditional Rendering: Table View OR Kanban View */}
+      {viewMode === "kanban" ? (
+        <KanbanBoard
+          applications={sortedApplications}
+          setApplications={setApplications}
+          backendUrl={backendUrl}
+          token={token}
+        />
+      ) : (
+        <div className="table-responsive shadow-sm">
+          <table className="table table-hover table-bordered table-striped mb-0">
+            <thead className="table-dark">
               <tr>
-                <td colSpan="7" className="text-center text-muted py-3">
-                  No applications found.
-                </td>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Applied Date</th>
+                <th>Interview Date</th>
+                <th>Notes</th>
+                <th>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {sortedApplications.map((app) => (
+                <tr key={app._id}>
+                  <td className="align-middle fw-bold">{app.companyName}</td>
+                  <td className="align-middle">{app.role}</td>
+                  <td className="align-middle">
+                    <span
+                      className={`badge ${
+                        app.status === "Selected"
+                          ? "bg-success"
+                          : app.status === "Rejected"
+                            ? "bg-danger"
+                            : app.status === "Interviewing"
+                              ? "bg-info text-dark"
+                              : app.status === "Applied"
+                                ? "bg-primary"
+                                : "bg-secondary"
+                      }`}
+                    >
+                      {app.status}
+                    </span>
+                  </td>
+                  <td className="align-middle">
+                    {app.appliedDate
+                      ? new Date(app.appliedDate).toLocaleDateString("en-GB")
+                      : "N/A"}
+                  </td>
+                  <td className="align-middle">
+                    {app.interviewDate
+                      ? new Date(app.interviewDate).toLocaleDateString("en-GB")
+                      : "N/A"}
+                  </td>
+                  <td className="align-middle">
+                    {app.notes && String(app.notes).trim().length > 0 ? (
+                      <span
+                        className="text-truncate d-inline-block"
+                        style={{ maxWidth: "150px" }}
+                        title={app.notes}
+                      >
+                        {app.notes}
+                      </span>
+                    ) : (
+                      <span className="text-muted small">No notes</span>
+                    )}
+                  </td>
+                  <td className="align-middle">
+                    <button
+                      className="btn btn-primary btn-sm me-2"
+                      onClick={() => navigate(`/edit-application/${app._id}`)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(app._id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {sortedApplications.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="text-center text-muted py-3">
+                    No applications found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
