@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import JobFinder from "./JobFinder";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -16,6 +17,11 @@ const KanbanBoard = ({ applications, setApplications, backendUrl, token }) => {
     }, {});
     setBoardData(categorized);
   }, [applications]);
+
+  // Nayi apply ki gayi job ko turant Kanban board ke state mein add karne ke liye
+  const handleJobAdded = (newApp) => {
+    setApplications((prev) => [newApp, ...prev]);
+  };
 
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
@@ -51,62 +57,71 @@ const KanbanBoard = ({ applications, setApplications, backendUrl, token }) => {
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="row g-3 p-2">
-        {COLUMNS.map((col) => (
-          <div className="col-12 col-md-3" key={col}>
-            <Droppable droppableId={col}>
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="bg-light p-3 rounded shadow-sm"
-                  style={{ minHeight: "500px" }}
-                >
-                  <h5 className="fw-bold text-secondary mb-3 text-center border-bottom pb-2">
-                    {col} ({boardData[col]?.length || 0})
-                  </h5>
-                  {boardData[col]?.map((app, index) => (
-                    <Draggable
-                      key={app._id}
-                      draggableId={app._id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="bg-white p-3 rounded shadow-sm mb-3 border-start border-4 border-primary"
-                          style={{
-                            cursor: "grab",
-                            ...provided.draggableProps.style,
-                          }}
-                        >
-                          <h6 className="fw-bold text-dark mb-1">
-                            {app.companyName}
-                          </h6>
-                          <p className="text-muted small mb-1">{app.role}</p>
-                          {app.notes && (
-                            <p
-                              className="text-secondary small mt-2 mb-0 italic text-truncate"
-                              title={app.notes}
-                            >
-                              📝 {app.notes}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </div>
-        ))}
-      </div>
-    </DragDropContext>
+    <>
+      {/* Domain Job Search & Auto-Track Section */}
+      <JobFinder
+        onJobAdded={handleJobAdded}
+        backendUrl={backendUrl}
+        token={token}
+      />
+
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="row g-3 p-2">
+          {COLUMNS.map((col) => (
+            <div className="col-12 col-md-3" key={col}>
+              <Droppable droppableId={col}>
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="bg-light p-3 rounded shadow-sm"
+                    style={{ minHeight: "500px" }}
+                  >
+                    <h5 className="fw-bold text-secondary mb-3 text-center border-bottom pb-2">
+                      {col} ({boardData[col]?.length || 0})
+                    </h5>
+                    {boardData[col]?.map((app, index) => (
+                      <Draggable
+                        key={app._id}
+                        draggableId={app._id}
+                        index={index}
+                      >
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="bg-white p-3 rounded shadow-sm mb-3 border-start border-4 border-primary"
+                            style={{
+                              cursor: "grab",
+                              ...provided.draggableProps.style,
+                            }}
+                          >
+                            <h6 className="fw-bold text-dark mb-1">
+                              {app.companyName}
+                            </h6>
+                            <p className="text-muted small mb-1">{app.role}</p>
+                            {app.notes && (
+                              <p
+                                className="text-secondary small mt-2 mb-0 italic text-truncate"
+                                title={app.notes}
+                              >
+                                📝 {app.notes}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          ))}
+        </div>
+      </DragDropContext>
+    </>
   );
 };
 
