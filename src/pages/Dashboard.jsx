@@ -13,6 +13,7 @@ import {
 import { CSVLink } from "react-csv";
 import KanbanBoard from "../components/KanbanBoard";
 import JobFinder from "../components/JobFinder";
+import InterviewPrepDrawer from "../components/InterviewPrepDrawer";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ function Dashboard() {
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("table");
+  const [selectedVaultApp, setSelectedVaultApp] = useState(null);
 
   const backendUrl = "https://placement-tracker-backend-sik5.onrender.com";
   const token = localStorage.getItem("token");
@@ -49,6 +51,12 @@ function Dashboard() {
     setApplications((prev) => [newApp, ...prev]);
   };
 
+  const handleVaultSaved = (updatedApp) => {
+    setApplications((prev) =>
+      prev.map((item) => (item._id === updatedApp._id ? updatedApp : item)),
+    );
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this application?")) {
       try {
@@ -68,7 +76,6 @@ function Dashboard() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // 1. Agle 7 dinon ke upcoming interviews filter karein
   const upcomingInterviews = applications
     .filter((app) => {
       if (
@@ -91,7 +98,6 @@ function Dashboard() {
     })
     .sort((a, b) => a.daysLeft - b.daysLeft);
 
-  // 2. Check karein ki kisi Applied job ko 7+ din ho gaye hain kya
   const isFollowUpDue = (app) => {
     if (app.status !== "Applied" || !app.appliedDate) return false;
     const appDate = new Date(app.appliedDate);
@@ -102,11 +108,16 @@ function Dashboard() {
     return daysSinceApplied >= 7;
   };
 
-  // 3. One-click Follow-up Email Template Copy
   const handleCopyFollowUp = (app) => {
     const emailTemplate = `Subject: Follow-up on ${app.role} Application - ${app.companyName}\n\nHi Hiring Team,\n\nI hope you're doing well. I recently applied for the ${app.role} position at ${app.companyName} and wanted to kindly follow up on the status of my application. I am very enthusiastic about the opportunity to contribute to your team.\n\nThank you for your time and consideration.\n\nBest regards,\nAkanksha Kumari`;
     navigator.clipboard.writeText(emailTemplate);
     toast.success(`Follow-up email copied for ${app.companyName}!`);
+  };
+
+  // Notes column mein clean text dikhane ke liye helper
+  const getCleanNotePreview = (notes) => {
+    if (!notes) return "";
+    return String(notes).split("---PREP_VAULT---")[0].trim();
   };
 
   const totalApps = applications.length;
@@ -171,7 +182,6 @@ function Dashboard() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>My Job Applications</h2>
 
-        {/* View Toggle Switch (Table vs Kanban) */}
         <div className="btn-group" role="group">
           <button
             type="button"
@@ -214,7 +224,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Domain Job Search & Two-Step Apply Section */}
+      {/* Domain Job Search & ATS Matcher */}
       <JobFinder
         onJobAdded={handleJobAdded}
         backendUrl={backendUrl}
@@ -389,7 +399,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Conditional Rendering: Table View OR Kanban View */}
+      {/* Table View OR Kanban View */}
       {viewMode === "kanban" ? (
         <KanbanBoard
           applications={sortedApplications}
@@ -407,17 +417,25 @@ function Dashboard() {
                 <th>Status</th>
                 <th>Applied Date</th>
                 <th>Interview Date</th>
-                <th>Notes</th>
+                <th>Notes / Package</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {sortedApplications.map((app) => {
                 const needsFollowUp = isFollowUpDue(app);
+                const cleanNote = getCleanNotePreview(app.notes);
                 return (
                   <tr key={app._id}>
                     <td className="align-middle fw-bold">
-                      {app.companyName}
+                      <span
+                        className="text-primary text-decoration-underline"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedVaultApp(app)}
+                        title="Open Interview Prep Vault"
+                      >
+                        {app.companyName}
+                      </span>
                       {needsFollowUp && (
                         <span className="badge bg-warning text-dark ms-2">
                           Follow-up Due
@@ -455,13 +473,13 @@ function Dashboard() {
                         : "N/A"}
                     </td>
                     <td className="align-middle">
-                      {app.notes && String(app.notes).trim().length > 0 ? (
+                      {cleanNote.length > 0 ? (
                         <span
                           className="text-truncate d-inline-block"
-                          style={{ maxWidth: "150px" }}
-                          title={app.notes}
+                          style={{ maxWidth: "160px" }}
+                          title={cleanNote}
                         >
-                          {app.notes}
+                          {cleanNote}
                         </span>
                       ) : (
                         <span className="text-muted small">No notes</span>
@@ -469,6 +487,13 @@ function Dashboard() {
                     </td>
                     <td className="align-middle">
                       <div className="d-flex flex-wrap gap-1">
+                        <button
+                          className="btn btn-dark btn-sm"
+                          onClick={() => setSelectedVaultApp(app)}
+                          title="Company Interview Prep Vault"
+                        >
+                          📝 Vault
+                        </button>
                         <button
                           className="btn btn-primary btn-sm"
                           onClick={() =>
@@ -508,6 +533,15 @@ function Dashboard() {
           </table>
         </div>
       )}
+
+      {/* Company-Wise Interview Prep Vault Drawer */}
+      <InterviewPrepDrawer
+        app={selectedVaultApp}
+        onClose={() => setSelectedVaultApp(null)}
+        onSaved={handleVaultSaved}
+        backendUrl={backendUrl}
+        token={token}
+      />
     </div>
   );
 }
