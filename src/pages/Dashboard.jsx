@@ -21,7 +21,7 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
-  const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
+  const [viewMode, setViewMode] = useState("table");
 
   const backendUrl = "https://placement-tracker-backend-sik5.onrender.com";
   const token = localStorage.getItem("token");
@@ -45,7 +45,6 @@ function Dashboard() {
     }
   };
 
-  // Nayi apply ki gayi job ko turant Dashboard state (Table, Chart & Kanban) mein add karne ke liye
   const handleJobAdded = (newApp) => {
     setApplications((prev) => [newApp, ...prev]);
   };
@@ -63,6 +62,51 @@ function Dashboard() {
         toast.error("Failed to delete application.");
       }
     }
+  };
+
+  // --- SMART REMINDERS & FOLLOW-UP LOGIC ---
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 1. Agle 7 dinon ke upcoming interviews filter karein
+  const upcomingInterviews = applications
+    .filter((app) => {
+      if (
+        !app.interviewDate ||
+        app.status === "Rejected" ||
+        app.status === "Selected"
+      ) {
+        return false;
+      }
+      const intDate = new Date(app.interviewDate);
+      intDate.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((intDate - today) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    })
+    .map((app) => {
+      const intDate = new Date(app.interviewDate);
+      intDate.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((intDate - today) / (1000 * 60 * 60 * 24));
+      return { ...app, daysLeft: diffDays };
+    })
+    .sort((a, b) => a.daysLeft - b.daysLeft);
+
+  // 2. Check karein ki kisi Applied job ko 7+ din ho gaye hain kya
+  const isFollowUpDue = (app) => {
+    if (app.status !== "Applied" || !app.appliedDate) return false;
+    const appDate = new Date(app.appliedDate);
+    appDate.setHours(0, 0, 0, 0);
+    const daysSinceApplied = Math.floor(
+      (today - appDate) / (1000 * 60 * 60 * 24),
+    );
+    return daysSinceApplied >= 7;
+  };
+
+  // 3. One-click Follow-up Email Template Copy
+  const handleCopyFollowUp = (app) => {
+    const emailTemplate = `Subject: Follow-up on ${app.role} Application - ${app.companyName}\n\nHi Hiring Team,\n\nI hope you're doing well. I recently applied for the ${app.role} position at ${app.companyName} and wanted to kindly follow up on the status of my application. I am very enthusiastic about the opportunity to contribute to your team.\n\nThank you for your time and consideration.\n\nBest regards,\nAkanksha Kumari`;
+    navigator.clipboard.writeText(emailTemplate);
+    toast.success(`Follow-up email copied for ${app.companyName}!`);
   };
 
   const totalApps = applications.length;
@@ -146,7 +190,31 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Domain Job Search & Auto-Track Section */}
+      {/* Upcoming Interview Reminder Banner */}
+      {upcomingInterviews.length > 0 && (
+        <div className="alert alert-warning border-start border-4 border-warning shadow-sm mb-4">
+          <h6 className="fw-bold mb-2">⏰ Upcoming Interviews (Next 7 Days)</h6>
+          <div className="d-flex flex-wrap gap-2">
+            {upcomingInterviews.map((item) => (
+              <span
+                key={item._id}
+                className="badge bg-dark text-white p-2 fs-6 fw-normal"
+              >
+                <strong>{item.companyName}</strong> ({item.role}) —{" "}
+                <span className="text-warning fw-bold">
+                  {item.daysLeft === 0
+                    ? "Today!"
+                    : item.daysLeft === 1
+                      ? "Tomorrow"
+                      : `In ${item.daysLeft} days`}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Domain Job Search & Two-Step Apply Section */}
       <JobFinder
         onJobAdded={handleJobAdded}
         backendUrl={backendUrl}
@@ -344,66 +412,91 @@ function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {sortedApplications.map((app) => (
-                <tr key={app._id}>
-                  <td className="align-middle fw-bold">{app.companyName}</td>
-                  <td className="align-middle">{app.role}</td>
-                  <td className="align-middle">
-                    <span
-                      className={`badge ${
-                        app.status === "Selected"
-                          ? "bg-success"
-                          : app.status === "Rejected"
-                            ? "bg-danger"
-                            : app.status === "Interviewing"
-                              ? "bg-info text-dark"
-                              : app.status === "Applied"
-                                ? "bg-primary"
-                                : "bg-secondary"
-                      }`}
-                    >
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="align-middle">
-                    {app.appliedDate
-                      ? new Date(app.appliedDate).toLocaleDateString("en-GB")
-                      : "N/A"}
-                  </td>
-                  <td className="align-middle">
-                    {app.interviewDate
-                      ? new Date(app.interviewDate).toLocaleDateString("en-GB")
-                      : "N/A"}
-                  </td>
-                  <td className="align-middle">
-                    {app.notes && String(app.notes).trim().length > 0 ? (
+              {sortedApplications.map((app) => {
+                const needsFollowUp = isFollowUpDue(app);
+                return (
+                  <tr key={app._id}>
+                    <td className="align-middle fw-bold">
+                      {app.companyName}
+                      {needsFollowUp && (
+                        <span className="badge bg-warning text-dark ms-2">
+                          Follow-up Due
+                        </span>
+                      )}
+                    </td>
+                    <td className="align-middle">{app.role}</td>
+                    <td className="align-middle">
                       <span
-                        className="text-truncate d-inline-block"
-                        style={{ maxWidth: "150px" }}
-                        title={app.notes}
+                        className={`badge ${
+                          app.status === "Selected"
+                            ? "bg-success"
+                            : app.status === "Rejected"
+                              ? "bg-danger"
+                              : app.status === "Interviewing"
+                                ? "bg-info text-dark"
+                                : app.status === "Applied"
+                                  ? "bg-primary"
+                                  : "bg-secondary"
+                        }`}
                       >
-                        {app.notes}
+                        {app.status}
                       </span>
-                    ) : (
-                      <span className="text-muted small">No notes</span>
-                    )}
-                  </td>
-                  <td className="align-middle">
-                    <button
-                      className="btn btn-primary btn-sm me-2"
-                      onClick={() => navigate(`/edit-application/${app._id}`)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(app._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="align-middle">
+                      {app.appliedDate
+                        ? new Date(app.appliedDate).toLocaleDateString("en-GB")
+                        : "N/A"}
+                    </td>
+                    <td className="align-middle">
+                      {app.interviewDate
+                        ? new Date(app.interviewDate).toLocaleDateString(
+                            "en-GB",
+                          )
+                        : "N/A"}
+                    </td>
+                    <td className="align-middle">
+                      {app.notes && String(app.notes).trim().length > 0 ? (
+                        <span
+                          className="text-truncate d-inline-block"
+                          style={{ maxWidth: "150px" }}
+                          title={app.notes}
+                        >
+                          {app.notes}
+                        </span>
+                      ) : (
+                        <span className="text-muted small">No notes</span>
+                      )}
+                    </td>
+                    <td className="align-middle">
+                      <div className="d-flex flex-wrap gap-1">
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() =>
+                            navigate(`/edit-application/${app._id}`)
+                          }
+                        >
+                          Edit
+                        </button>
+                        {needsFollowUp && (
+                          <button
+                            className="btn btn-outline-dark btn-sm"
+                            onClick={() => handleCopyFollowUp(app)}
+                            title="Copy Follow-up Email"
+                          >
+                            ✉️ Follow-up
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDelete(app._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {sortedApplications.length === 0 && (
                 <tr>
                   <td colSpan="7" className="text-center text-muted py-3">
