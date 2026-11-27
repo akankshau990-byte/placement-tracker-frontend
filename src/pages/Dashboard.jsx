@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { CSVLink } from "react-csv";
 import KanbanBoard from "../components/KanbanBoard";
+import JobFinder from "../components/JobFinder";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -42,6 +43,11 @@ function Dashboard() {
     } catch (error) {
       console.log("Error fetching applications:", error);
     }
+  };
+
+  // Nayi apply ki gayi job ko turant Dashboard state (Table, Chart & Kanban) mein add karne ke liye
+  const handleJobAdded = (newApp) => {
+    setApplications((prev) => [newApp, ...prev]);
   };
 
   const handleDelete = async (id) => {
@@ -139,6 +145,13 @@ function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Domain Job Search & Auto-Track Section */}
+      <JobFinder
+        onJobAdded={handleJobAdded}
+        backendUrl={backendUrl}
+        token={token}
+      />
 
       {/* Stat Cards Section */}
       <div className="row mb-4 text-center">
