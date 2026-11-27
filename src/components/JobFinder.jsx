@@ -1,13 +1,15 @@
 import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import ResumeMatcher from "./ResumeMatcher";
 
 const JobFinder = ({ onJobAdded, backendUrl, token }) => {
   const [domain, setDomain] = useState("");
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [openedIds, setOpenedIds] = useState([]); // Jin jobs ka link khola gaya hai
-  const [appliedIds, setAppliedIds] = useState([]); // Jin par sach mein apply confirm hua hai
+  const [openedIds, setOpenedIds] = useState([]);
+  const [appliedIds, setAppliedIds] = useState([]);
+  const [selectedJobForATS, setSelectedJobForATS] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -32,7 +34,6 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
     }
   };
 
-  // Step 1: Sirf Apply page kholega, abhi Applied mark nahi karega
   const handleOpenApplyLink = (job) => {
     window.open(job.applyUrl, "_blank", "noopener,noreferrer");
     if (!openedIds.includes(job.externalId)) {
@@ -41,7 +42,6 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
     toast.info("Form submit karne ke baad yahan 'Mark as Applied' dabayein.");
   };
 
-  // Step 2: Jab user confirm karega tab database & board mein Applied save hoga
   const handleConfirmApplied = async (job) => {
     try {
       const res = await axios.post(
@@ -73,7 +73,31 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
 
   return (
     <div className="card shadow-sm p-4 mb-4">
-      <h5 className="fw-bold mb-3">Find & Apply Jobs by Domain</h5>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="fw-bold mb-0">Find & Apply Jobs by Domain</h5>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-dark fw-semibold"
+          onClick={() =>
+            setSelectedJobForATS(
+              selectedJobForATS ? null : { role: "", description: "" },
+            )
+          }
+        >
+          {selectedJobForATS
+            ? "Close ATS Matcher"
+            : "🎯 Open ATS Resume Matcher"}
+        </button>
+      </div>
+
+      {/* ATS Matcher Panel */}
+      {selectedJobForATS && (
+        <ResumeMatcher
+          initialJobTitle={selectedJobForATS.role}
+          initialJobDesc={selectedJobForATS.description || ""}
+          onClose={() => setSelectedJobForATS(null)}
+        />
+      )}
 
       <form onSubmit={handleSearch} className="d-flex gap-2 mb-3">
         <input
@@ -109,36 +133,53 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
                 <p className="text-primary fw-semibold mb-1">{job.company}</p>
                 <small className="text-muted mb-3">{job.location}</small>
 
-                <div className="mt-auto d-flex gap-2">
-                  {!isApplied && (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-primary flex-grow-1"
-                      onClick={() => handleOpenApplyLink(job)}
-                    >
-                      {isOpened ? "Open Link Again ↗" : "Apply Now ↗"}
-                    </button>
-                  )}
+                <div className="mt-auto d-flex flex-column gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary w-100"
+                    onClick={() =>
+                      setSelectedJobForATS({
+                        role: `${job.role} at ${job.company}`,
+                        description:
+                          job.description ||
+                          `${job.role} ${job.jobType} ${job.location}`,
+                      })
+                    }
+                  >
+                    🎯 Check Resume Match
+                  </button>
 
-                  {isOpened && !isApplied && (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-warning fw-semibold flex-grow-1"
-                      onClick={() => handleConfirmApplied(job)}
-                    >
-                      Mark as Applied ✓
-                    </button>
-                  )}
+                  <div className="d-flex gap-2">
+                    {!isApplied && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary flex-grow-1"
+                        onClick={() => handleOpenApplyLink(job)}
+                      >
+                        {isOpened ? "Open Link Again ↗" : "Apply Now ↗"}
+                      </button>
+                    )}
 
-                  {isApplied && (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-success w-100"
-                      disabled
-                    >
-                      Applied ✓
-                    </button>
-                  )}
+                    {isOpened && !isApplied && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-warning fw-semibold flex-grow-1"
+                        onClick={() => handleConfirmApplied(job)}
+                      >
+                        Mark as Applied ✓
+                      </button>
+                    )}
+
+                    {isApplied && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-success w-100"
+                        disabled
+                      >
+                        Applied ✓
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
