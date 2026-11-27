@@ -6,7 +6,8 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
   const [domain, setDomain] = useState("");
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [appliedIds, setAppliedIds] = useState([]);
+  const [openedIds, setOpenedIds] = useState([]); // Jin jobs ka link khola gaya hai
+  const [appliedIds, setAppliedIds] = useState([]); // Jin par sach mein apply confirm hua hai
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -31,9 +32,17 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
     }
   };
 
-  const handleApplyAndTrack = async (job) => {
+  // Step 1: Sirf Apply page kholega, abhi Applied mark nahi karega
+  const handleOpenApplyLink = (job) => {
     window.open(job.applyUrl, "_blank", "noopener,noreferrer");
+    if (!openedIds.includes(job.externalId)) {
+      setOpenedIds((prev) => [...prev, job.externalId]);
+    }
+    toast.info("Form submit karne ke baad yahan 'Mark as Applied' dabayein.");
+  };
 
+  // Step 2: Jab user confirm karega tab database & board mein Applied save hoga
+  const handleConfirmApplied = async (job) => {
     try {
       const res = await axios.post(
         `${backendUrl}/api/applications`,
@@ -50,7 +59,7 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
       );
 
       setAppliedIds((prev) => [...prev, job.externalId]);
-      toast.success(`${job.company} added to Applied!`);
+      toast.success(`${job.company} marked as Applied!`);
 
       const createdApp = res.data.application || res.data;
       if (onJobAdded && createdApp) {
@@ -58,9 +67,7 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
       }
     } catch (err) {
       console.error("Error saving application:", err);
-      toast.error(
-        "Apply link khul gaya hai, par board mein save nahi ho paya.",
-      );
+      toast.error("Application save karne mein error aaya.");
     }
   };
 
@@ -88,6 +95,8 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
       <div className="row g-3">
         {jobs.map((job) => {
           const isApplied = appliedIds.includes(job.externalId);
+          const isOpened = openedIds.includes(job.externalId);
+
           return (
             <div key={job.externalId} className="col-md-6 col-lg-4">
               <div className="card h-100 p-3 border">
@@ -100,16 +109,37 @@ const JobFinder = ({ onJobAdded, backendUrl, token }) => {
                 <p className="text-primary fw-semibold mb-1">{job.company}</p>
                 <small className="text-muted mb-3">{job.location}</small>
 
-                <button
-                  type="button"
-                  className={`btn btn-sm mt-auto w-100 ${
-                    isApplied ? "btn-success" : "btn-outline-primary"
-                  }`}
-                  onClick={() => handleApplyAndTrack(job)}
-                  disabled={isApplied}
-                >
-                  {isApplied ? "Applied & Added to Board ✓" : "Apply & Track"}
-                </button>
+                <div className="mt-auto d-flex gap-2">
+                  {!isApplied && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary flex-grow-1"
+                      onClick={() => handleOpenApplyLink(job)}
+                    >
+                      {isOpened ? "Open Link Again ↗" : "Apply Now ↗"}
+                    </button>
+                  )}
+
+                  {isOpened && !isApplied && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-warning fw-semibold flex-grow-1"
+                      onClick={() => handleConfirmApplied(job)}
+                    >
+                      Mark as Applied ✓
+                    </button>
+                  )}
+
+                  {isApplied && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-success w-100"
+                      disabled
+                    >
+                      Applied ✓
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
