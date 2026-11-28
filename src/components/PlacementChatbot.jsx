@@ -8,8 +8,25 @@ const QUICK_PROMPTS = [
   "Cold message template for referral",
 ];
 
+// Cleanly formats **bold** text returned by Gemini
+const FormattedMessage = ({ text }) => {
+  const parts = String(text).split(/(\*\*.*?\*\*)/g);
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.startsWith("**") && part.endsWith("**") ? (
+          <strong key={index}>{part.slice(2, -2)}</strong>
+        ) : (
+          <span key={index}>{part}</span>
+        ),
+      )}
+    </>
+  );
+};
+
 const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([
@@ -23,9 +40,8 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isExpanded]);
 
-  // Summarize tracked applications so the AI can tailor its guidance
   const userContext =
     applications.length > 0
       ? `Applied/Interviewing at: ${applications
@@ -82,7 +98,7 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="btn btn-primary shadow-lg rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2"
+        className="btn btn-primary shadow-lg rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2"
         style={{
           position: "fixed",
           bottom: "24px",
@@ -93,7 +109,7 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
         <span>{isOpen ? "✖ Close Mentor" : "🤖 AI Prep Mentor"}</span>
       </button>
 
-      {/* Chat Window */}
+      {/* Spacious Resizable Chat Window */}
       {isOpen && (
         <div
           className="card shadow-lg border-0 d-flex flex-column"
@@ -101,65 +117,77 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
             position: "fixed",
             bottom: "78px",
             right: "24px",
-            width: "360px",
+            width: isExpanded ? "760px" : "460px",
             maxWidth: "calc(100vw - 32px)",
-            height: "480px",
+            height: isExpanded ? "calc(100vh - 110px)" : "600px",
+            maxHeight: "calc(100vh - 100px)",
             zIndex: 1030,
             borderRadius: "16px",
             overflow: "hidden",
+            transition: "all 0.25s ease",
           }}
         >
           {/* Header */}
           <div className="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
             <div>
               <h6 className="mb-0 fw-bold">🤖 AI Placement Mentor</h6>
-              <small style={{ fontSize: "11px", opacity: 0.9 }}>
+              <small style={{ fontSize: "12px", opacity: 0.9 }}>
                 Powered by Gemini • Context-Aware
               </small>
             </div>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-light"
-              onClick={() =>
-                setMessages([
-                  {
-                    sender: "bot",
-                    text: "Chat reset! Which company, role, or topic would you like to prepare for today?",
-                  },
-                ])
-              }
-            >
-              Reset
-            </button>
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-light"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                title={isExpanded ? "Shrink Window" : "Expand Window"}
+              >
+                {isExpanded ? "🗗 Compact" : "⛶ Expand"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-light"
+                onClick={() =>
+                  setMessages([
+                    {
+                      sender: "bot",
+                      text: "Chat reset! Which company, role, or topic would you like to prepare for today?",
+                    },
+                  ])
+                }
+              >
+                Reset
+              </button>
+            </div>
           </div>
 
           {/* Messages Area */}
           <div
             className="p-3 flex-grow-1 bg-light"
-            style={{ overflowY: "auto", fontSize: "14px" }}
+            style={{ overflowY: "auto", fontSize: "14.5px" }}
           >
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`d-flex mb-2 ${
+                className={`d-flex mb-3 ${
                   msg.sender === "user"
                     ? "justify-content-end"
                     : "justify-content-start"
                 }`}
               >
                 <div
-                  className={`p-2 px-3 rounded-3 shadow-sm ${
+                  className={`p-3 rounded-3 shadow-sm ${
                     msg.sender === "user"
                       ? "bg-primary text-white"
                       : "bg-white text-dark border"
                   }`}
                   style={{
-                    maxWidth: "85%",
+                    maxWidth: "88%",
                     whiteSpace: "pre-line",
-                    lineHeight: "1.45",
+                    lineHeight: "1.55",
                   }}
                 >
-                  {msg.text}
+                  <FormattedMessage text={msg.text} />
                 </div>
               </div>
             ))}
@@ -174,13 +202,13 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
 
           {/* Quick Starter Chips */}
           {messages.length <= 2 && (
-            <div className="px-2 py-1 bg-white border-top d-flex gap-1 flex-wrap">
+            <div className="px-3 py-2 bg-white border-top d-flex gap-2 flex-wrap">
               {QUICK_PROMPTS.map((q, i) => (
                 <button
                   key={i}
                   type="button"
                   className="btn btn-outline-primary btn-sm"
-                  style={{ fontSize: "11px", padding: "2px 8px" }}
+                  style={{ fontSize: "12px", padding: "4px 10px" }}
                   onClick={() => handleSend(q)}
                 >
                   {q}
@@ -192,11 +220,11 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
           {/* Input Box */}
           <form
             onSubmit={handleSubmit}
-            className="p-2 bg-white border-top d-flex gap-2"
+            className="p-3 bg-white border-top d-flex gap-2"
           >
             <input
               type="text"
-              className="form-control form-control-sm"
+              className="form-control"
               placeholder="Ask DSA, HR, or company tips..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -204,7 +232,7 @@ const PlacementChatbot = ({ backendUrl, token, applications = [] }) => {
             />
             <button
               type="submit"
-              className="btn btn-primary btn-sm px-3 fw-semibold"
+              className="btn btn-primary px-4 fw-semibold"
               disabled={loading || !input.trim()}
             >
               Send
