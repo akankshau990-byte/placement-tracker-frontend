@@ -15,6 +15,7 @@ import { CSVLink } from "react-csv";
 import KanbanBoard from "../components/KanbanBoard";
 import JobFinder from "../components/JobFinder";
 import InterviewPrepDrawer from "../components/InterviewPrepDrawer";
+import CommunityHub from "../components/CommunityHub";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -179,9 +180,9 @@ function Dashboard() {
   ];
 
   return (
-    <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Job Applications</h2>
+    <div className="container mt-5 mb-5">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 className="mb-0">My Job Applications</h2>
 
         <div className="btn-group" role="group">
           <button
@@ -197,6 +198,13 @@ function Dashboard() {
             onClick={() => setViewMode("kanban")}
           >
             📊 Kanban Board
+          </button>
+          <button
+            type="button"
+            className={`btn ${viewMode === "community" ? "btn-primary" : "btn-outline-primary"}`}
+            onClick={() => setViewMode("community")}
+          >
+            💬 Community Hub
           </button>
         </div>
       </div>
@@ -307,7 +315,7 @@ function Dashboard() {
       </div>
 
       {/* Analytics Chart */}
-      {totalApps > 0 && (
+      {totalApps > 0 && viewMode !== "community" && (
         <div className="card p-3 mb-4 shadow-sm">
           <h5 className="text-center mb-3">Application Status Overview</h5>
           <div style={{ width: "100%", height: 280, minHeight: 280 }}>
@@ -337,71 +345,75 @@ function Dashboard() {
       )}
 
       {/* Controls Section */}
-      <div className="row mb-4 align-items-center">
-        <div className="col-md-3 mb-2">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search company..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="col-md-3 mb-2">
-          <select
-            className="form-select"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="All">All Statuses</option>
-            <option value="Applied">Applied</option>
-            <option value="Interviewing">Interviewing</option>
-            <option value="Selected">Selected</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-        </div>
-        <div className="col-md-2 mb-2">
-          <select
-            className="form-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="company">Company (A-Z)</option>
-          </select>
-        </div>
-        <div className="col-md-2 mb-2">
-          {sortedApplications.length > 0 ? (
-            <CSVLink
-              data={sortedApplications}
-              headers={csvHeaders}
-              filename={"placement_applications.csv"}
-              className="btn btn-outline-dark w-100 fw-bold"
+      {viewMode !== "community" && (
+        <div className="row mb-4 align-items-center">
+          <div className="col-md-3 mb-2">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search company..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="col-md-3 mb-2">
+            <select
+              className="form-select"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
             >
-              📥 Export CSV
-            </CSVLink>
-          ) : (
+              <option value="All">All Statuses</option>
+              <option value="Applied">Applied</option>
+              <option value="Interviewing">Interviewing</option>
+              <option value="Selected">Selected</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div className="col-md-2 mb-2">
+            <select
+              className="form-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="company">Company (A-Z)</option>
+            </select>
+          </div>
+          <div className="col-md-2 mb-2">
+            {sortedApplications.length > 0 ? (
+              <CSVLink
+                data={sortedApplications}
+                headers={csvHeaders}
+                filename={"placement_applications.csv"}
+                className="btn btn-outline-dark w-100 fw-bold"
+              >
+                📥 Export CSV
+              </CSVLink>
+            ) : (
+              <button
+                className="btn btn-outline-secondary w-100 fw-bold"
+                disabled
+              >
+                📥 Export CSV
+              </button>
+            )}
+          </div>
+          <div className="col-md-2 mb-2">
             <button
-              className="btn btn-outline-secondary w-100 fw-bold"
-              disabled
+              className="btn btn-success w-100 fw-bold"
+              onClick={() => navigate("/add-application")}
             >
-              📥 Export CSV
+              + Add New
             </button>
-          )}
+          </div>
         </div>
-        <div className="col-md-2 mb-2">
-          <button
-            className="btn btn-success w-100 fw-bold"
-            onClick={() => navigate("/add-application")}
-          >
-            + Add New
-          </button>
-        </div>
-      </div>
+      )}
 
-      {/* Table View OR Kanban View */}
-      {viewMode === "kanban" ? (
+      {/* Community Hub OR Kanban Board OR Table View */}
+      {viewMode === "community" ? (
+        <CommunityHub backendUrl={backendUrl} />
+      ) : viewMode === "kanban" ? (
         <KanbanBoard
           applications={sortedApplications}
           setApplications={setApplications}
