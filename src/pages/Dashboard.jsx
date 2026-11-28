@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import PlacementChatbot from "../components/PlacementChatbot";
 import {
   PieChart,
   Pie,
@@ -114,7 +115,7 @@ function Dashboard() {
     toast.success(`Follow-up email copied for ${app.companyName}!`);
   };
 
-  // Notes column mein clean text dikhane ke liye helper
+  // Helper to show clean text preview in Notes column
   const getCleanNotePreview = (notes) => {
     if (!notes) return "";
     return String(notes).split("---PREP_VAULT---")[0].trim();
@@ -541,6 +542,13 @@ function Dashboard() {
         onSaved={handleVaultSaved}
         backendUrl={backendUrl}
         token={token}
+      />
+
+      {/* Floating AI Placement Mentor Chatbot */}
+      <PlacementChatbot
+        backendUrl={backendUrl}
+        token={token}
+        applications={applications}
       />
     </div>
   );
