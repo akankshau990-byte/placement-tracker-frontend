@@ -2,69 +2,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-// Curated Most-Asked DSA & Technical Questions by Company & Role
-const COMPANY_QUESTION_BANK = {
-  tcs: [
-    "1. Reverse a String / Check Palindrome without built-in methods",
-    "2. Find Second Largest Element & Remove Duplicates in an Array",
-    "3. Fibonacci Series, Prime Number & Armstrong Number Logic",
-    "4. OOPs Concepts: Polymorphism, Inheritance, Encapsulation with real examples",
-    "5. SQL Joins (Inner, Left, Right) & Second Highest Salary Query",
-    "6. DBMS Normalization (1NF, 2NF, 3NF) & ACID Properties",
-  ],
-  infosys: [
-    "1. Two Sum & Subarray with Given Sum",
-    "2. Valid Parentheses using Stack",
-    "3. Binary Search & Merge Sort Time Complexity",
-    "4. Difference between Process and Thread (OS)",
-    "5. Primary Key vs Foreign Key vs Unique Key in SQL",
-  ],
-  wipro: [
-    "1. Count Frequency of Characters in a String",
-    "2. Detect Loop in a Linked List (Floyd's Cycle Detection)",
-    "3. Deadlock Conditions & Prevention in Operating Systems",
-    "4. TCP vs UDP & HTTP vs HTTPS",
-  ],
-  accenture: [
-    "1. Anagram Check & Longest Common Prefix",
-    "2. Missing Number in Array (1 to N)",
-    "3. Abstract Class vs Interface",
-    "4. SDLC Models (Agile vs Waterfall)",
-  ],
-  amazon: [
-    "1. LRU Cache Implementation (HashMap + Doubly Linked List)",
-    "2. Number of Islands (BFS / DFS Graph Traversal)",
-    "3. Merge Intervals & Trapping Rain Water",
-    "4. Lowest Common Ancestor in a Binary Tree",
-    "5. Amazon Leadership Principles (Customer Obsession, Ownership)",
-  ],
-  google: [
-    "1. Word Ladder / Shortest Path in Unweighted Graph",
-    "2. Dynamic Programming: Longest Increasing Subsequence",
-    "3. Merge K Sorted Lists using Min-Heap",
-    "4. System Design: URL Shortener / Rate Limiter",
-  ],
-  microsoft: [
-    "1. Reverse Nodes in k-Group (Linked List)",
-    "2. Validate Binary Search Tree (BST)",
-    "3. Topological Sort (Course Schedule)",
-    "4. Copy List with Random Pointer",
-  ],
-  default: [
-    "1. Two Sum, Kadane's Maximum Subarray & Sliding Window Basics",
-    "2. Reverse a Linked List & Merge Two Sorted Lists",
-    "3. React Virtual DOM, useEffect Lifecycle & State Management",
-    "4. Node.js Event Loop, Promises vs Async/Await & REST API Status Codes",
-    "5. MongoDB Indexing, Aggregation & JWT Authentication Flow",
-  ],
-};
-
 const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
   const [stipend, setStipend] = useState("");
   const [referralContact, setReferralContact] = useState("");
   const [dsaQuestions, setDsaQuestions] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   useEffect(() => {
     if (!app) return;
@@ -91,25 +35,33 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
 
   if (!app) return null;
 
-  // Company ke hisaab se top asked questions fetch karke box mein daalne wala helper
-  const handleLoadCompanyQuestions = () => {
-    const compKey = (app.companyName || "").trim().toLowerCase();
-    let matchedList = COMPANY_QUESTION_BANK.default;
+  const handleGenerateDynamicQuestions = async () => {
+    setLoadingQuestions(true);
+    try {
+      const res = await axios.post(
+        `${backendUrl}/api/questions/generate`,
+        {
+          companyName: app.companyName,
+          role: app.role,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
-    for (const key of Object.keys(COMPANY_QUESTION_BANK)) {
-      if (key !== "default" && compKey.includes(key)) {
-        matchedList = COMPANY_QUESTION_BANK[key];
-        break;
-      }
+      const fetchedQuestions = res.data.questions;
+      setDsaQuestions((prev) =>
+        prev.trim()
+          ? `${prev.trim()}\n\n${fetchedQuestions}`
+          : fetchedQuestions,
+      );
+      toast.success(`Generated live questions for ${app.companyName}!`);
+    } catch (error) {
+      console.error("Error generating questions:", error);
+      toast.error("Questions load karne mein error aaya.");
+    } finally {
+      setLoadingQuestions(false);
     }
-
-    const formattedQuestions = matchedList.join("\n");
-    setDsaQuestions((prev) =>
-      prev.trim()
-        ? `${prev.trim()}\n\n--- Top Asked Questions (${app.companyName}) ---\n${formattedQuestions}`
-        : formattedQuestions,
-    );
-    toast.info(`Loaded top interview questions for ${app.companyName}!`);
   };
 
   const handleSaveVault = async (e) => {
@@ -178,7 +130,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
           top: 0,
           right: 0,
           width: "100%",
-          maxWidth: "480px",
+          maxWidth: "500px",
           height: "100vh",
           zIndex: 1050,
           overflowY: "auto",
@@ -231,20 +183,23 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-1">
               <label className="form-label fw-semibold mb-0">
-                💻 Asked DSA & Technical Questions
+                💻 Company-Wise Asked Questions
               </label>
               <button
                 type="button"
-                className="btn btn-sm btn-outline-primary fw-semibold"
-                onClick={handleLoadCompanyQuestions}
+                className="btn btn-sm btn-primary fw-semibold"
+                onClick={handleGenerateDynamicQuestions}
+                disabled={loadingQuestions}
               >
-                ✨ Load {app.companyName} Questions
+                {loadingQuestions
+                  ? "⏳ Generating..."
+                  : `✨ Get ${app.companyName} Questions`}
               </button>
             </div>
             <textarea
               className="form-control"
-              rows="6"
-              placeholder="Click 'Load Questions' above to auto-fill top asked questions, or type your own..."
+              rows="8"
+              placeholder="Click 'Get Questions' above to dynamically load DSA, Technical & HR questions..."
               value={dsaQuestions}
               onChange={(e) => setDsaQuestions(e.target.value)}
             />
@@ -266,7 +221,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
           <div className="mt-auto pt-3 border-top d-flex gap-2">
             <button
               type="submit"
-              className="btn btn-primary fw-bold flex-grow-1"
+              className="btn btn-success fw-bold flex-grow-1"
               disabled={saving}
             >
               {saving ? "Saving..." : "💾 Save to Prep Vault"}
