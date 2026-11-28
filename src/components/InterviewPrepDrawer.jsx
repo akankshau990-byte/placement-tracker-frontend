@@ -9,6 +9,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
   const [generalNotes, setGeneralNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [batchCount, setBatchCount] = useState(1);
 
   useEffect(() => {
     if (!app) return;
@@ -20,7 +21,11 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
         const parsed = JSON.parse(jsonPart);
         setStipend(parsed.stipend || "");
         setReferralContact(parsed.referralContact || "");
-        setDsaQuestions(parsed.dsaQuestions || "");
+        const savedQ = parsed.dsaQuestions || "";
+        setDsaQuestions(savedQ);
+        const existingBatches = (savedQ.match(/MORE QUESTIONS BATCH/g) || [])
+          .length;
+        setBatchCount(savedQ.trim() ? existingBatches + 2 : 1);
         setGeneralNotes(parsed.generalNotes || "");
       } catch {
         setGeneralNotes(raw);
@@ -29,6 +34,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
       setStipend("");
       setReferralContact("");
       setDsaQuestions("");
+      setBatchCount(1);
       setGeneralNotes(raw);
     }
   }, [app]);
@@ -37,9 +43,10 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
 
   const hasExistingQuestions = dsaQuestions.trim().length > 20;
 
-  // Dynamic Backend AI Call: First time full prep kit + resources, next clicks append 15 NEW questions
   const handleGenerateDynamicQuestions = async () => {
     setLoadingQuestions(true);
+    const currentBatch = hasExistingQuestions ? batchCount : 1;
+
     try {
       const res = await axios.post(
         `${backendUrl}/api/questions/generate`,
@@ -47,6 +54,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
           companyName: app.companyName,
           role: app.role,
           existingQuestions: dsaQuestions,
+          batchNumber: currentBatch,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -56,12 +64,14 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
       const fetchedQuestions = res.data.questions;
       setDsaQuestions((prev) =>
         prev.trim()
-          ? `${prev.trim()}\n\n--- MORE QUESTIONS BATCH ---\n\n${fetchedQuestions}`
+          ? `${prev.trim()}\n\n--- MORE QUESTIONS BATCH #${currentBatch} ---\n\n${fetchedQuestions}`
           : fetchedQuestions,
       );
+      setBatchCount(currentBatch + 1);
+
       toast.success(
         hasExistingQuestions
-          ? `15 new questions added for ${app.companyName}!`
+          ? `Batch #${currentBatch}: 15 new questions added!`
           : `Full Prep Kit & Sources loaded for ${app.companyName}!`,
       );
     } catch (error) {
@@ -198,7 +208,10 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
                   <button
                     type="button"
                     className="btn btn-sm btn-outline-danger"
-                    onClick={() => setDsaQuestions("")}
+                    onClick={() => {
+                      setDsaQuestions("");
+                      setBatchCount(1);
+                    }}
                     title="Clear all questions"
                   >
                     Clear
