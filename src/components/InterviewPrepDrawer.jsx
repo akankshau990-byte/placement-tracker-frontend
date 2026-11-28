@@ -35,6 +35,9 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
 
   if (!app) return null;
 
+  const hasExistingQuestions = dsaQuestions.trim().length > 20;
+
+  // Dynamic Backend AI Call: First time full prep kit + resources, next clicks append 15 NEW questions
   const handleGenerateDynamicQuestions = async () => {
     setLoadingQuestions(true);
     try {
@@ -43,6 +46,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
         {
           companyName: app.companyName,
           role: app.role,
+          existingQuestions: dsaQuestions,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -52,10 +56,14 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
       const fetchedQuestions = res.data.questions;
       setDsaQuestions((prev) =>
         prev.trim()
-          ? `${prev.trim()}\n\n${fetchedQuestions}`
+          ? `${prev.trim()}\n\n--- MORE QUESTIONS BATCH ---\n\n${fetchedQuestions}`
           : fetchedQuestions,
       );
-      toast.success(`Generated live questions for ${app.companyName}!`);
+      toast.success(
+        hasExistingQuestions
+          ? `15 new questions added for ${app.companyName}!`
+          : `Full Prep Kit & Sources loaded for ${app.companyName}!`,
+      );
     } catch (error) {
       console.error("Error generating questions:", error);
       toast.error("Questions load karne mein error aaya.");
@@ -130,7 +138,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
           top: 0,
           right: 0,
           width: "100%",
-          maxWidth: "500px",
+          maxWidth: "560px",
           height: "100vh",
           zIndex: 1050,
           overflowY: "auto",
@@ -181,25 +189,39 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
           </div>
 
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-1">
+            <div className="d-flex justify-content-between align-items-center mb-1 gap-2 flex-wrap">
               <label className="form-label fw-semibold mb-0">
-                💻 Company-Wise Asked Questions
+                💻 Complete Prep Kit, Sources & Questions
               </label>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary fw-semibold"
-                onClick={handleGenerateDynamicQuestions}
-                disabled={loadingQuestions}
-              >
-                {loadingQuestions
-                  ? "⏳ Generating..."
-                  : `✨ Get ${app.companyName} Questions`}
-              </button>
+              <div className="d-flex gap-1">
+                {hasExistingQuestions && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => setDsaQuestions("")}
+                    title="Clear all questions"
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary fw-semibold"
+                  onClick={handleGenerateDynamicQuestions}
+                  disabled={loadingQuestions}
+                >
+                  {loadingQuestions
+                    ? "⏳ Generating..."
+                    : hasExistingQuestions
+                      ? "➕ Load 15 More Questions"
+                      : `✨ Get ${app.companyName} Full Kit`}
+                </button>
+              </div>
             </div>
             <textarea
               className="form-control"
-              rows="8"
-              placeholder="Click 'Get Questions' above to dynamically load DSA, Technical & HR questions..."
+              rows="11"
+              placeholder="Click button above to load Hiring Pattern, Prep Sources (LeetCode/GFG/Striver), DSA, Core CS & HR questions..."
               value={dsaQuestions}
               onChange={(e) => setDsaQuestions(e.target.value)}
             />
@@ -211,7 +233,7 @@ const InterviewPrepDrawer = ({ app, onClose, onSaved, backendUrl, token }) => {
             </label>
             <textarea
               className="form-control"
-              rows="3"
+              rows="2"
               placeholder="Round dates, interviewer feedback, topics to revise..."
               value={generalNotes}
               onChange={(e) => setGeneralNotes(e.target.value)}
