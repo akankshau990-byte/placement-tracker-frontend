@@ -34,45 +34,23 @@ const CommunityHub = ({ backendUrl }) => {
 
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
+  const token = localStorage.getItem("token");
 
-  // Extract unique user ID from JWT & fetch real user name from backend
+  // Fetch real logged-in user name & MongoDB _id from backend
   useEffect(() => {
-    const loadUserInfo = async () => {
+    const fetchMe = async () => {
+      if (!token) return;
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const uid = String(payload.id || payload._id || payload.userId || "");
-
-        // Check if user object was saved in localStorage on login
-        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        let displayName =
-          storedUser.name ||
-          payload.name ||
-          (payload.email ? payload.email.split("@")[0] : "");
-
-        // If still no name, fetch profile from backend if endpoint exists
-        if (!displayName) {
-          try {
-            const res = await axios.get(`${backendUrl}/api/auth/profile`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            displayName = res.data?.name || res.data?.user?.name || "";
-          } catch {
-            // Fallback using short unique ID suffix so two users never collide
-            displayName = uid ? `Student-${uid.slice(-4)}` : "Peer";
-          }
-        }
-
-        setCurrentUser({ id: uid, name: displayName });
-      } catch {
-        setCurrentUser({ id: "", name: "Peer" });
+        const res = await axios.get(`${backendUrl}/api/community-user/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCurrentUser(res.data);
+      } catch (err) {
+        console.error("Failed to fetch user info:", err);
       }
     };
-
-    loadUserInfo();
-  }, [backendUrl]);
+    fetchMe();
+  }, [backendUrl, token]);
 
   // Initialize Socket connection once
   useEffect(() => {
@@ -121,8 +99,7 @@ const CommunityHub = ({ backendUrl }) => {
 
     socketRef.current.emit("send_message", {
       room: activeRoom,
-      senderName: currentUser.name || "Peer",
-      senderId: currentUser.id,
+      token,
       text: text.trim(),
     });
     setText("");
@@ -138,7 +115,9 @@ const CommunityHub = ({ backendUrl }) => {
           <h6 className="fw-bold mb-1">💬 Peer Community</h6>
           <small className="text-secondary d-block mb-3">
             Chatting as:{" "}
-            <span className="text-warning">{currentUser.name || "..."}</span>
+            <span className="text-warning fw-semibold">
+              {currentUser.name || "Loading..."}
+            </span>
           </small>
           <div className="d-flex flex-column gap-2">
             {ROOMS.map((room) => (
@@ -178,7 +157,6 @@ const CommunityHub = ({ backendUrl }) => {
               </p>
             ) : (
               messages.map((msg, i) => {
-                // Compare unique MongoDB user IDs so other users never show as "You"
                 const isMe =
                   Boolean(currentUser.id) &&
                   String(msg.senderId) === String(currentUser.id);
